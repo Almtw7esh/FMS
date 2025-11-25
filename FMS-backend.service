@@ -1,0 +1,13 @@
+[Unit]
+Description=FMS Flask Backend (using venv)
+After=network.target
+
+[Service]
+Type=simple
+User=marwan
+WorkingDirectory=/home/marwan/Desktop/FMS/backend
+ExecStart=/home/marwan/Desktop/FMS/backend/venv/bin/python flask_api.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

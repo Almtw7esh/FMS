@@ -1,0 +1,13 @@
+[Unit]
+Description=FMS Flask Backend
+After=network.target
+
+[Service]
+Type=simple
+User=marwan
+WorkingDirectory=/home/marwan/Desktop/FMS/backend
+ExecStart=/usr/bin/python3 flask_api.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
