@@ -17,7 +17,7 @@ def start_background_scraping():
         print("Background scraping thread started.")
         while True:
             print(f"Background scrape tick: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-            for username, password in user_sessions.items():
+            for username, password in list(user_sessions.items()):
                 print(f"Scraping for user: {username}")
                 try:
                     loop = asyncio.new_event_loop()
