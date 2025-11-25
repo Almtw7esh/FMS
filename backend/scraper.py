@@ -9,7 +9,15 @@ async def scrape(username, password):
     async with async_playwright() as p:
         print("Launching browser...")
         browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+        context = await browser.new_context()
+        await context.clear_cookies()
+        page = await context.new_page()
+        # Mimic real browser headers and settings
+        await page.set_extra_http_headers({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9"
+        })
+        await page.set_viewport_size({"width": 1280, "height": 800})
         print("Navigating to login page...")
         await page.goto(LOGIN_URL)
         print("Filling username...")
@@ -25,8 +33,12 @@ async def scrape(username, password):
         print("Clicking confirm...")
         await page.click('//*[@id="kc-login"]')
         print("Waiting for page to load after confirm...")
+        # Wait longer after login confirm to ensure page loads
+        await asyncio.sleep(5)
         print("Navigating directly to Halasat board...")
-        await page.goto("https://msp.go2field.iq/board/a22c39cb-093c-d83e-7dd1-a8c7a5d0fa7b", wait_until="networkidle", timeout=30000)
+        await page.goto("https://msp.go2field.iq/board/a22c39cb-093c-d83e-7dd1-a8c7a5d0fa7b", wait_until="domcontentloaded", timeout=90000)
+        # Wait for document to be fully loaded after navigation
+        await asyncio.sleep(2)
         print("Waiting for Halasat button in sidebar...")
         try:
             halasat_button = await page.wait_for_selector('xpath=/html/body/app-root/div/app-main-layout/div/div[2]/app-board-view/div/div[1]/div[4]/div[3]/a[4]', timeout=15000)
