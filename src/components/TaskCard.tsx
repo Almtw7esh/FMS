@@ -98,19 +98,49 @@ const TaskCard = ({
 
         {/* Social Icons */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-fms-border overflow-hidden">
-          {/* WhatsApp Groups (up to 4) */}
-          {Array.isArray(whatsappGroups) && whatsappGroups.slice(0, 4).map((group, index) => (
-            <button
-              key={`${group.link}-${group.name}-${index}`}
-              onClick={() => handleWhatsAppShare(group.link)}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-fms-whatsapp/10 hover:bg-fms-whatsapp/20 transition-colors cursor-pointer"
-              title={`Send to ${group.name}`}
-            >
-              <FaWhatsapp className="w-4 h-4 text-fms-whatsapp" />
-              <span className="text-xs font-medium text-fms-whatsapp">{group.name}</span>
-            </button>
-          ))}
+          {/* WhatsApp Groups (custom demo) */}
+          <button
+            onClick={() => handleWhatsAppShare("https://chat.whatsapp.com/Dd6Zim7zP0b906Mmc683tx")}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-fms-whatsapp/10 hover:bg-fms-whatsapp/20 transition-colors cursor-pointer"
+            title="Send to دوره مسائي fms"
+          >
+            <FaWhatsapp className="w-4 h-4 text-fms-whatsapp" />
+            <span className="text-xs font-medium text-fms-whatsapp">دوره مسائي fms</span>
+          </button>
+          <button
+            onClick={() => handleWhatsAppShare("https://chat.whatsapp.com/JbDxFoRHiWC00UOEY4MTWh")}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-fms-whatsapp/10 hover:bg-fms-whatsapp/20 transition-colors cursor-pointer"
+            title="Send to دوره FMS"
+          >
+            <FaWhatsapp className="w-4 h-4 text-fms-whatsapp" />
+            <span className="text-xs font-medium text-fms-whatsapp">دوره FMS</span>
+          </button>
+          <button
+            onClick={() => handleWhatsAppShare("https://chat.whatsapp.com/IqmsU029e9d302Vppa3VoA")}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-fms-whatsapp/10 hover:bg-fms-whatsapp/20 transition-colors cursor-pointer"
+            title="Send to دوره FMS"
+          >
+            <FaWhatsapp className="w-4 h-4 text-fms-whatsapp" />
+            <span className="text-xs font-medium text-fms-whatsapp"> زعفرانية مسائي FMS</span>
+          </button>
+          <button
+            onClick={() => handleWhatsAppShare("https://chat.whatsapp.com/GdUt54IuG7hCzQE6kLiSfj")}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-fms-whatsapp/10 hover:bg-fms-whatsapp/20 transition-colors cursor-pointer"
+            title="Send to دوره FMS"
+          >
+            <FaWhatsapp className="w-4 h-4 text-fms-whatsapp" />
+            <span className="text-xs font-medium text-fms-whatsapp"> دورة صباحي FMS</span>
+          </button>
+          <button
+            onClick={() => handleWhatsAppShare("https://chat.whatsapp.com/IqmsU029e9d302Vppa3VoA")}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-fms-whatsapp/10 hover:bg-fms-whatsapp/20 transition-colors cursor-pointer"
+            title="Send to دوره FMS"
+          >
+            <FaWhatsapp className="w-4 h-4 text-fms-whatsapp" />
+            <span className="text-xs font-medium text-fms-whatsapp"> مدائن صباحي FMS</span>
+          </button>
 
+          
           {/* Telegram */}
           <button
             onClick={handleTelegramShare}
