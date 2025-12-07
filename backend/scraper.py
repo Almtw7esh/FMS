@@ -61,15 +61,41 @@ async def scrape(username, password):
         print("Scraping columns...")
         try:
             csv_data = []
-            card_refs = []
-            columns = await page.query_selector_all('.board-col')
-            for col in columns:
-                col_title_el = await col.query_selector('.board-col-title h5')
-                col_title = await col_title_el.inner_text() if col_title_el else ""
-                if col_title not in ["New", "Pending", "In Progress"]:
+            for col_title in ["New", "Pending", "In Progress"]:
+                print(f"Processing column: {col_title}")
+                await page.wait_for_selector('.board-col', timeout=120000)
+                columns = await page.query_selector_all('.board-col')
+                col = None
+                for c in columns:
+                    col_title_el = await c.query_selector('.board-col-title h5')
+                    title = await col_title_el.inner_text() if col_title_el else ""
+                    if title == col_title:
+                        col = c
+                        break
+                if not col:
+                    print(f"Column {col_title} not found.")
                     continue
                 card_els = await col.query_selector_all('board-task-box')
-                for card_el in card_els:
+                print(f"Found {len(card_els)} cards in column {col_title}")
+                for card_idx in range(len(card_els)):
+                    print(f"Processing card {card_idx+1}/{len(card_els)} in column {col_title}")
+                    await page.wait_for_selector('.board-col', timeout=120000)
+                    columns_fresh = await page.query_selector_all('.board-col')
+                    col_fresh = None
+                    for c in columns_fresh:
+                        col_title_fresh_el = await c.query_selector('.board-col-title h5')
+                        col_title_fresh = await col_title_fresh_el.inner_text() if col_title_fresh_el else ""
+                        if col_title_fresh == col_title:
+                            col_fresh = c
+                            break
+                    if not col_fresh:
+                        print(f"Could not find column {col_title} after refresh.")
+                        continue
+                    card_els_fresh = await col_fresh.query_selector_all('board-task-box')
+                    if card_idx >= len(card_els_fresh):
+                        print(f"Card index {card_idx} out of range for column {col_title} after refresh.")
+                        continue
+                    card_el = card_els_fresh[card_idx]
                     case_number_el = await card_el.query_selector('.task-code')
                     case_number = await case_number_el.inner_text() if case_number_el else ""
                     title_el = await card_el.query_selector('.task-name a')
@@ -91,7 +117,59 @@ async def scrape(username, password):
                         href = await title_link.get_attribute('href')
                         if href and '/task/' in href:
                             uuid = href.split('/task/')[-1]
-                    # Store card info and element reference for later message scraping
+                    messages = []
+                    try:
+                        print(f"Clicking card to view details...")
+                        async with page.expect_navigation(timeout=30000):
+                            await card_el.click()
+                        await asyncio.sleep(3)
+                        current_url = page.url
+                        uuid_from_url = None
+                        if '/task/' in current_url:
+                            uuid_from_url = current_url.split('/task/')[-1].split('?')[0]
+                            print(f"Extracted uuid from URL: {uuid_from_url}")
+                            uuid = uuid_from_url
+                        else:
+                            print(f"Could not extract uuid from URL: {current_url}")
+                        await page.wait_for_selector('xpath=//*[@id=\"app_container\"]/app-main-layout/div/div[2]/app-task-view/div/div[3]/div/app-permission/div/app-task-notes/div/div[2]/app-task-event/div/div/div[2]', timeout=30000)
+                        message_elements = await page.query_selector_all('xpath=//*[@id=\"app_container\"]/app-main-layout/div/div[2]/app-task-view/div/div[3]/div/app-permission/div/app-task-notes/div/div[2]/app-task-event/div/div/div[2]')
+                        print(f"Found {len(message_elements)} notes/messages for card {uuid}")
+                        for el in message_elements:
+                            try:
+                                msg_text = await el.inner_text()
+                                messages.append({"message": msg_text})
+                            except Exception as e:
+                                print(f"Error reading message text: {e}")
+                        print(f"Messages for card {uuid}: {messages}")
+                        if not messages:
+                            await page.screenshot(path=f"Errors/error_no_messages_{uuid or 'unknown'}.png")
+                            print(f"No messages found for card {uuid}, screenshot saved.")
+                    except Exception as e:
+                        print(f"Error scraping messages for card: {e}")
+                        try:
+                            await page.screenshot(path=f"Errors/error_scraping_messages_{uuid or 'unknown'}.png")
+                            print(f"Screenshot saved for message error on card {uuid or 'unknown'}.")
+                        except:
+                            pass
+                    finally:
+                        await page.goto("https://msp.go2field.iq/board/a22c39cb-093c-d83e-7dd1-a8c7a5d0fa7b", timeout=120000)
+                        await asyncio.sleep(2)
+                        # Click Halasat button again to reload columns
+                        try:
+                            halasat_button = await page.wait_for_selector('xpath=/html/body/app-root/div/app-main-layout/div/div[2]/app-board-view/div/div[1]/div[4]/div[3]/a[4]', timeout=15000)
+                            print("Halasat button found. Clicking again...")
+                            async with page.expect_navigation(timeout=20000):
+                                await halasat_button.click()
+                            print("Halasat button clicked. Waiting for columns to appear...")
+                            await page.wait_for_selector('.board-col', timeout=15000)
+                            await asyncio.sleep(3)
+                        except Exception as e:
+                            print(f"Failed to show columns after Halasat button click: {e}")
+                            try:
+                                await page.screenshot(path="Errors/error_no_columns.png")
+                                print("Screenshot saved as Errors/error_no_columns.png")
+                            except:
+                                pass
                     csv_data.append({
                         "Column": col_title,
                         "CaseNumber": case_number,
@@ -99,51 +177,8 @@ async def scrape(username, password):
                         "FBG": fbg_number,
                         "CardText": card_text,
                         "uuid": uuid,
-                        "messages": []
+                        "messages": messages
                     })
-                    card_refs.append(card_el)
-            print("Column and card info scraped. Now scraping messages...")
-            # Scrape messages for each card after all columns are scraped
-            for i, card_el in enumerate(card_refs):
-                messages = []
-                try:
-                    print(f"Clicking card to view details...")
-                    async with page.expect_navigation(timeout=30000):
-                        await card_el.click()
-                    await asyncio.sleep(3)
-                    # After navigation, get uuid from current URL
-                    current_url = page.url
-                    uuid_from_url = None
-                    if '/task/' in current_url:
-                        uuid_from_url = current_url.split('/task/')[-1].split('?')[0]
-                        print(f"Extracted uuid from URL: {uuid_from_url}")
-                        csv_data[i]["uuid"] = uuid_from_url
-                    else:
-                        print(f"Could not extract uuid from URL: {current_url}")
-                    await page.wait_for_selector('xpath=//*[@id=\"app_container\"]/app-main-layout/div/div[2]/app-task-view/div/div[3]/div/app-permission/div/app-task-notes/div/div[2]/app-task-event/div/div/div[2]', timeout=30000)
-                    message_elements = await page.query_selector_all('xpath=//*[@id=\"app_container\"]/app-main-layout/div/div[2]/app-task-view/div/div[3]/div/app-permission/div/app-task-notes/div/div[2]/app-task-event/div/div/div[2]')
-                    print(f"Found {len(message_elements)} notes/messages for card {uuid_from_url}")
-                    for el in message_elements:
-                        try:
-                            msg_text = await el.inner_text()
-                            messages.append({"message": msg_text})
-                        except Exception as e:
-                            print(f"Error reading message text: {e}")
-                    if not messages:
-                        await page.screenshot(path=f"Errors/error_no_messages_{uuid_from_url or 'unknown'}.png")
-                        print(f"No messages found for card {uuid_from_url}, screenshot saved.")
-                except Exception as e:
-                    print(f"Error scraping messages for card: {e}")
-                    try:
-                        await page.screenshot(path=f"Errors/error_scraping_messages_{uuid_from_url or 'unknown'}.png")
-                        print(f"Screenshot saved for message error on card {uuid_from_url or 'unknown'}.")
-                    except:
-                        pass
-                finally:
-                    # Always go back to board for next card, even if message scraping fails
-                    await page.goto("https://msp.go2field.iq/board/a22c39cb-093c-d83e-7dd1-a8c7a5d0fa7b", timeout=120000)
-                    await page.wait_for_selector('.board-col', timeout=120000)
-                csv_data[i]["messages"] = messages
             print("Scraping complete.")
             # Save to CSV with datetime name
             import csv
