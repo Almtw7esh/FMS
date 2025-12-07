@@ -25,6 +25,24 @@ def start_background_scraping():
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     scraped_data = loop.run_until_complete(scrape(username, password))
+                    # Merge messages for tasks with same uuid to preserve old messages
+                    prev_columns = user_tasks.get(username, {
+                        'NEW': [],
+                        'Pending': [],
+                        'In Progress': []
+                    })
+                    def merge_messages(old_tasks, new_task):
+                        for old_task in old_tasks:
+                            if old_task.get('uuid') == new_task.get('uuid') and new_task.get('uuid'):
+                                # Merge messages, avoid duplicates
+                                old_msgs = old_task.get('messages', [])
+                                new_msgs = new_task.get('messages', [])
+                                # Only add messages not already present
+                                msg_texts = set(m['message'] for m in old_msgs)
+                                merged_msgs = old_msgs + [m for m in new_msgs if m['message'] not in msg_texts]
+                                new_task['messages'] = merged_msgs
+                                return new_task
+                        return new_task
                     columns = {
                         'NEW': [],
                         'Pending': [],
@@ -32,17 +50,19 @@ def start_background_scraping():
                     }
                     for task in scraped_data:
                         col = task.get('Column')
-                        # Ensure uuid is present for every task
                         if 'uuid' not in task or not task['uuid']:
                             task['uuid'] = None
                         if col == 'New':
                             task['has_new_message'] = False
+                            task = merge_messages(prev_columns['NEW'], task)
                             columns['NEW'].append(task)
                         elif col == 'Pending':
                             task['has_new_message'] = False
+                            task = merge_messages(prev_columns['Pending'], task)
                             columns['Pending'].append(task)
                         elif col == 'In Progress':
                             task['has_new_message'] = False
+                            task = merge_messages(prev_columns['In Progress'], task)
                             columns['In Progress'].append(task)
                     user_tasks[username] = columns
                     print(f"Scraped: NEW={len(columns['NEW'])}, Pending={len(columns['Pending'])}, In Progress={len(columns['In Progress'])} for {username}")
@@ -198,5 +218,4 @@ def add_technician():
     
 if __name__ == '__main__':
     start_background_scraping()
-    app.run(debug=True, host='0.0.0.0', port=5003)
-
+    app.run(debug=True, host='0.0.0.0', port=5000)
