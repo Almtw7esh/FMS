@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+playwright
+fastapi
+uvicorn
+playwright
+flask
+flask_cors
+requests
