@@ -319,67 +319,58 @@ def login():
         })
     except Exception as e:
         print(f"[ERROR] Exception in /login: {e}")
-        
-@app.route('/playwright_upload', methods=['POST'])
-def playwright_upload():
-    """
-    Endpoint to upload a file using Playwright automation.
-    Expects form-data: username, password, task_filter, file
-    """
-    if not all(k in request.form for k in ('username', 'password', 'task_filter')) or 'file' not in request.files:
-        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
-    username = request.form['username']
-    password = request.form['password']
-    task_filter = request.form['task_filter']
-    file = request.files['file']
-    # Save file to uploads folder
-    uploads_folder = os.path.join(os.path.dirname(__file__), 'uploads')
-    os.makedirs(uploads_folder, exist_ok=True)
-    save_path = os.path.join(uploads_folder, file.filename)
-    file.save(save_path)
-    # Call upload.playwright.py as a background subprocess
-    try:
-        subprocess.Popen([
-            sys.executable, 'upload.playwright.py',
-            username, password, task_filter, save_path
-        ], cwd=os.path.dirname(__file__))
-        print(f"[DEBUG] Started upload.playwright.py as background process for {file.filename}")
-        return jsonify({'success': True, 'message': 'Upload started in background. You will be notified when it is complete.'})
-    except Exception as e:
-        print(f"[ERROR] Exception in /playwright_upload: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-            
-@app.route('/customer_upload', methods=['POST'])
-def customer_upload():
-    """
-    Customer-facing endpoint: accepts file and media_id, saves file to uploads, then uploads to FMS API.
-    Expects multipart/form-data with 'file' and 'media_id'.
-    """
-    if 'file' not in request.files or 'media_id' not in request.form:
-        return jsonify({'success': False, 'error': 'Missing file or media_id'}), 400
-    file = request.files['file']
-    media_id = request.form['media_id']
-    # Save file to uploads folder
-    uploads_folder = os.path.join(os.path.dirname(__file__), 'uploads')
-    os.makedirs(uploads_folder, exist_ok=True)
-    save_path = os.path.join(uploads_folder, file.filename)
-    file.save(save_path)
-    # Call upload.py with media_id and saved file path
+# In-memory upload status store
+UPLOAD_STATUS = {}
+# Endpoint to save form template JSON
+@app.route('/api/save-form-template', methods=['POST'])
+def save_form_template():
+    data = request.get_json()
+    task_id = data.get('taskId')
+    form_data = data.get('formData')
+    if not task_id or not form_data:
+        return jsonify({'error': 'Missing taskId or formData'}), 400
+    save_dir = os.path.join(os.path.dirname(__file__), 'form-templates')
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, f'{task_id}.json')
     try:
-        result = subprocess.run([
-            sys.executable, 'upload.py',
-            media_id, save_path
-        ], capture_output=True, text=True, cwd=os.path.dirname(__file__), timeout=180)
-        output = result.stdout + '\n' + result.stderr
-        print(f"[DEBUG] upload.py output:\n{output}")
-        print(f"[DEBUG] upload.py returncode: {result.returncode}")
-        if result.returncode == 0:
-            return jsonify({'success': True, 'output': output})
-        else:
-            return jsonify({'success': False, 'output': output}), 500
+        with open(save_path, 'w', encoding='utf-8') as f:
+            json.dump(form_data, f, ensure_ascii=False, indent=2)
+        return jsonify({'success': True, 'path': save_path})
     except Exception as e:
-        print(f"[ERROR] Exception in /customer_upload: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500        
+        return jsonify({'error': str(e)}), 500
+import requests
 
+TOKEN_FILE = os.path.join(os.path.dirname(__file__), 'token.json')
+
+def load_token():
+    if not os.path.exists(TOKEN_FILE):
+        return None
+    with open(TOKEN_FILE, 'r') as f:
+        data = json.load(f)
+        return data.get('token')
+
+# Endpoint to fetch dynamic form JSON for a task
+@app.route('/api/form/<task_id>', methods=['GET'])
+def get_task_form(task_id):
+    token = load_token()
+    if not token:
+        return jsonify({'error': 'Token not found'}), 401
+    api_url = f"https://fmsapi.el.earthlink.iq/api/tasks/tasks/{task_id}/template-form"
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        resp = requests.get(api_url, headers=headers, timeout=15)
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except requests.RequestException as e:
+        print(f"[ERROR] Failed to fetch form from {api_url}")
+        print(f"[ERROR] Status code: {getattr(e.response, 'status_code', None)}")
+        print(f"[ERROR] Response text: {getattr(e.response, 'text', None)}")
+        print(f"[ERROR] Exception: {e}")
+        return jsonify({'error': str(e), 'status_code': getattr(e.response, 'status_code', None), 'details': getattr(e.response, 'text', None)}), 502
+
+
+
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
