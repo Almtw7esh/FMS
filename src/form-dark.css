@@ -1,0 +1,28 @@
+/* FormPage dark mode overrides */
+.form-dark-bg {
+  background: #111 !important;
+  color: #fff !important;
+}
+.form-dark-bg * {
+  color: #fff !important;
+  border-color: #444 !important;
+}
+.form-dark-bg input,
+.form-dark-bg select,
+.form-dark-bg textarea {
+  background: #222 !important;
+  color: #fff !important;
+  border-color: #444 !important;
+}
+.form-dark-bg label {
+  color: #fff !important;
+}
+.form-dark-bg .btn-primary {
+  background: #222 !important;
+  color: #fff !important;
+  border: 1px solid #555 !important;
+}
+.form-dark-bg .white-box {
+  background: #181818 !important;
+  color: #fff !important;
+}

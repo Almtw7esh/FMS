@@ -7,6 +7,41 @@ const COLUMN_NAMES = ["NEW", "Pending", "In Progress"];
 const REFRESH_INTERVAL = 120; // seconds
 
 const FMSController = () => {
+    // Form template selector state
+    const [templateFiles, setTemplateFiles] = useState<string[]>([]);
+    const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+
+    // Fetch template file list from backend
+    useEffect(() => {
+      fetch("/api/list-form-templates")
+        .then(res => res.json())
+        .then(data => {
+          setTemplateFiles(data.files || []);
+          if (data.files && data.files.length > 0) setSelectedTemplate(data.files[0]);
+        });
+    }, []);
+
+    // POST to real web API
+    const handleSendToWeb = async () => {
+      if (!selectedTemplate) return toast({ title: "Select a template first" });
+      try {
+        const res = await fetch("/api/send-template-to-web", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: selectedTemplate }),
+        });
+        if (!res.ok) throw new Error("Failed to send template");
+        toast({ title: "Template sent to web!" });
+      } catch (err: any) {
+        toast({ title: err.message });
+      }
+    };
+
+    // Open form page for selected template
+    const handleOpenForm = () => {
+      if (!selectedTemplate) return toast({ title: "Select a template first" });
+      navigate(`/form/${selectedTemplate}`);
+    };
   const API_URL = import.meta.env.VITE_API_URL;
   const [columns, setColumns] = useState({ NEW: [], Pending: [], "In Progress": [] });
   const [loading, setLoading] = useState(false);
@@ -111,6 +146,31 @@ const FMSController = () => {
 
   return (
     <div className="min-h-screen w-full bg-black flex flex-col items-center justify-start overflow-x-auto">
+      {/* Form Template Selector UI */}
+      <div className="w-full flex justify-center items-center mt-8 mb-6">
+        <span className="text-white font-semibold mr-4">Select Form Template:</span>
+        <select
+          className="border rounded px-3 py-2 bg-[#222] text-white mr-4"
+          value={selectedTemplate}
+          onChange={e => setSelectedTemplate(e.target.value)}
+        >
+          {templateFiles.map(f => (
+            <option key={f} value={f}>{f}</option>
+          ))}
+        </select>
+        <button
+          className="btn btn-primary px-4 py-2 rounded text-white bg-blue-600 hover:bg-blue-700 mr-2"
+          onClick={handleSendToWeb}
+        >
+          Send to Web
+        </button>
+        <button
+          className="btn btn-secondary px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700"
+          onClick={handleOpenForm}
+        >
+          Open Form
+        </button>
+      </div>
       {/* Logout button in top left */}
       <div style={{ position: "fixed", top: 20, left: 32, zIndex: 100 }}>
         <button

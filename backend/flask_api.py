@@ -339,6 +339,7 @@ def save_form_template():
         return jsonify({'success': True, 'path': save_path})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 import requests
 
 TOKEN_FILE = os.path.join(os.path.dirname(__file__), 'token.json')
@@ -349,6 +350,7 @@ def load_token():
     with open(TOKEN_FILE, 'r') as f:
         data = json.load(f)
         return data.get('token')
+
 
 # Endpoint to fetch dynamic form JSON for a task
 @app.route('/api/form/<task_id>', methods=['GET'])
@@ -361,13 +363,28 @@ def get_task_form(task_id):
     try:
         resp = requests.get(api_url, headers=headers, timeout=15)
         resp.raise_for_status()
-        return jsonify(resp.json())
+        data = resp.json()
+        # Save the JSON response to api-form.json in the backend directory
+        save_path = os.path.join(os.path.dirname(__file__), 'api-form.json')
+        with open(save_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return jsonify(data)
     except requests.RequestException as e:
         print(f"[ERROR] Failed to fetch form from {api_url}")
         print(f"[ERROR] Status code: {getattr(e.response, 'status_code', None)}")
         print(f"[ERROR] Response text: {getattr(e.response, 'text', None)}")
         print(f"[ERROR] Exception: {e}")
         return jsonify({'error': str(e), 'status_code': getattr(e.response, 'status_code', None), 'details': getattr(e.response, 'text', None)}), 502
+
+# --- CATCH-ALL ROUTE FOR REACT SPA ---
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    # Serve static files if they exist
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    # Otherwise, serve index.html for React Router
+    return send_from_directory(app.static_folder, 'index.html')
 
 
 
