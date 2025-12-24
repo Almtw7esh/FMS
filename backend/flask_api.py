@@ -386,7 +386,27 @@ def serve_react(path):
     # Otherwise, serve index.html for React Router
     return send_from_directory(app.static_folder, 'index.html')
 
+# Endpoint to list all saved form templates
+@app.route('/api/list-form-templates', methods=['GET'])
+def list_form_templates():
+    templates_dir = os.path.join(os.path.dirname(__file__), 'form-templates')
+    files = []
+    if os.path.exists(templates_dir):
+        files = [f for f in os.listdir(templates_dir) if f.endswith('.json')]
+    return jsonify({'files': files})
 
+# Endpoint to serve a form template by filename
+@app.route('/api/form-template/<filename>', methods=['GET'])
+def get_form_template(filename):
+    import os
+    from flask import abort
+    templates_dir = os.path.join(os.path.dirname(__file__), 'form-templates')
+    file_path = os.path.join(templates_dir, filename)
+    if not os.path.exists(file_path) or not filename.endswith('.json'):
+        return abort(404)
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return jsonify(data)
 
     
 if __name__ == "__main__":

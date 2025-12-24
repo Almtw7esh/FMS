@@ -7,41 +7,43 @@ const COLUMN_NAMES = ["NEW", "Pending", "In Progress"];
 const REFRESH_INTERVAL = 120; // seconds
 
 const FMSController = () => {
-    // Form template selector state
-    const [templateFiles, setTemplateFiles] = useState<string[]>([]);
-    const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  // Form template selector state (shared for all cards)
+  const [templateFiles, setTemplateFiles] = useState<string[]>([]);
+  // Per-card selected template
+  const [selectedTemplates, setSelectedTemplates] = useState<{ [uuid: string]: string }>({});
 
-    // Fetch template file list from backend
-    useEffect(() => {
-      fetch("/api/list-form-templates")
-        .then(res => res.json())
-        .then(data => {
-          setTemplateFiles(data.files || []);
-          if (data.files && data.files.length > 0) setSelectedTemplate(data.files[0]);
-        });
-    }, []);
+  // Fetch template file list from backend
+  useEffect(() => {
+    fetch("/api/list-form-templates")
+      .then(res => res.json())
+      .then(data => {
+        setTemplateFiles(data.files || []);
+      });
+  }, []);
 
-    // POST to real web API
-    const handleSendToWeb = async () => {
-      if (!selectedTemplate) return toast({ title: "Select a template first" });
-      try {
-        const res = await fetch("/api/send-template-to-web", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: selectedTemplate }),
-        });
-        if (!res.ok) throw new Error("Failed to send template");
-        toast({ title: "Template sent to web!" });
-      } catch (err: any) {
-        toast({ title: err.message });
-      }
-    };
+  // POST to real web API for a specific task
+  const handleSendToWeb = async (uuid: string) => {
+    const selectedTemplate = selectedTemplates[uuid];
+    if (!selectedTemplate) return toast({ title: "Select a template first" });
+    try {
+      const res = await fetch("/api/send-template-to-web", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: selectedTemplate, taskUuid: uuid }),
+      });
+      if (!res.ok) throw new Error("Failed to send template");
+      toast({ title: "Template sent to web!" });
+    } catch (err: any) {
+      toast({ title: err.message });
+    }
+  };
 
-    // Open form page for selected template
-    const handleOpenForm = () => {
-      if (!selectedTemplate) return toast({ title: "Select a template first" });
-      navigate(`/form/${selectedTemplate}`);
-    };
+  // Open form page for selected template for a specific task
+  const handleOpenForm = (uuid: string) => {
+    const selectedTemplate = selectedTemplates[uuid];
+    if (!selectedTemplate) return toast({ title: "Select a template first" });
+    navigate(`/form/${selectedTemplate}`);
+  };
   const API_URL = import.meta.env.VITE_API_URL;
   const [columns, setColumns] = useState({ NEW: [], Pending: [], "In Progress": [] });
   const [loading, setLoading] = useState(false);
@@ -146,31 +148,6 @@ const FMSController = () => {
 
   return (
     <div className="min-h-screen w-full bg-black flex flex-col items-center justify-start overflow-x-auto">
-      {/* Form Template Selector UI */}
-      <div className="w-full flex justify-center items-center mt-8 mb-6">
-        <span className="text-white font-semibold mr-4">Select Form Template:</span>
-        <select
-          className="border rounded px-3 py-2 bg-[#222] text-white mr-4"
-          value={selectedTemplate}
-          onChange={e => setSelectedTemplate(e.target.value)}
-        >
-          {templateFiles.map(f => (
-            <option key={f} value={f}>{f}</option>
-          ))}
-        </select>
-        <button
-          className="btn btn-primary px-4 py-2 rounded text-white bg-blue-600 hover:bg-blue-700 mr-2"
-          onClick={handleSendToWeb}
-        >
-          Send to Web
-        </button>
-        <button
-          className="btn btn-secondary px-4 py-2 rounded text-white bg-gray-600 hover:bg-gray-700"
-          onClick={handleOpenForm}
-        >
-          Open Form
-        </button>
-      </div>
       {/* Logout button in top left */}
       <div style={{ position: "fixed", top: 20, left: 32, zIndex: 100 }}>
         <button
@@ -225,38 +202,52 @@ const FMSController = () => {
                             Created by: <span className="text-white">{task.CreatedBy || 's_creatio'}</span> | Assigned: <span className="text-white">{task.AssignedTo || 'msp_fms'}</span> | <span className="text-white">{task.Date || '01 Dec 2025 11:37'}</span>
                           </div>
                           <div className="flex flex-col gap-2 flex-1">
-                            {/* Upload icon now opens the task page in a new tab */}
+                            {/* Form template selector and action buttons */}
                             <div className="flex items-center gap-2 mb-2">
+                              <select
+                                className="border rounded px-2 py-1 bg-[#222] text-white text-xs"
+                                style={{ minWidth: 80 }}
+                                value={selectedTemplates[task.uuid] || ""}
+                                onChange={e => setSelectedTemplates(st => ({ ...st, [task.uuid]: e.target.value }))}
+                              >
+                                <option value="" disabled>Select template</option>
+                                {templateFiles.map(f => (
+                                  <option key={f} value={f}>{f}</option>
+                                ))}
+                              </select>
                               <button
                                 type="button"
-                                title="Open task page for upload"
+                                title="Send template to web"
                                 style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                                onClick={() => {
-                                  if (task.uuid) {
-                                    window.open(`https://msp.go2field.iq/task/${task.uuid}`, "_blank", "noopener,noreferrer");
-                                  }
-                                }}
+                                onClick={() => handleSendToWeb(task.uuid)}
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-blue-400 hover:text-blue-600">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3.5 3.5M12 8l3.5 3.5M4 16.5V19a2 2 0 002 2h12a2 2 0 002-2v-2.5" />
+                                {/* Send icon */}
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-blue-400 hover:text-blue-600">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10l9-6 9 6-9 6-9-6zm0 0v6a2 2 0 002 2h14a2 2 0 002-2v-6" />
                                 </svg>
                               </button>
                               <button
                                 type="button"
-                                title="Open dynamic form for this task"
+                                title="open form page"
                                 style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
                                 onClick={() => {
-                                  if (task.uuid) {
+                                  const selectedTemplate = selectedTemplates[task.uuid];
+                                  if (!selectedTemplate) {
+                                    // No template selected: open the real form for the task
                                     navigate(`/form/${task.uuid}`);
+                                  } else {
+                                    // Template selected: open the template form
+                                    navigate(`/form/${selectedTemplate}`);
                                   }
                                 }}
                               >
-                                {/* Form icon (simple document icon) */}
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-400 hover:text-green-600">
+                                {/* Form icon */}
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-green-400 hover:text-green-600">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 2a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8.828a2 2 0 00-.586-1.414l-4.828-4.828A2 2 0 0014.172 2H6zm7 1.414V8a1 1 0 001 1h4.586" />
                                 </svg>
                               </button>
                             </div>
+                            {/* Upload icon now opens the task page in a new tab, placed after messages icon, not in the same line as form/template actions */}
                             {/* Show all messages for this task */}
                             {taskMessages[task.CaseNumber]?.messages && taskMessages[task.CaseNumber].messages.length > 0 ? (
                               <div className="flex flex-col gap-2 mt-1">
@@ -274,6 +265,21 @@ const FMSController = () => {
                                     <FaRegCommentDots className="text-green-400 animate-bounce" size={22} />
                                   </button>
                                   <span className="text-xs text-green-300">Messages</span>
+                                  {/* Upload icon next to messages icon */}
+                                  <button
+                                    type="button"
+                                    title="Open task page for upload"
+                                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                                    onClick={() => {
+                                      if (task.uuid) {
+                                        window.open(`https://msp.go2field.iq/task/${task.uuid}`, "_blank", "noopener,noreferrer");
+                                      }
+                                    }}
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-blue-400 hover:text-blue-600">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3.5 3.5M12 8l3.5 3.5M4 16.5V19a2 2 0 002 2h12a2 2 0 002-2v-2.5" />
+                                    </svg>
+                                  </button>
                                 </div>
                                 {taskMessages[task.CaseNumber].messages.map((msg: any, i: number) => (
                                   <div key={i} className="text-xs text-gray-300 border-b border-gray-700 pb-1 mb-1">
@@ -356,7 +362,9 @@ const FMSController = () => {
                                         if (typeof window !== "undefined") window.dispatchEvent(new Event("worker-select"));
                                       }
                                     }}
-                                  >{task.isApplying ? 'Applying...' : 'Assign'}</button>
+                                  >
+                                    {task.isApplying ? 'Applying...' : 'Assign'}
+                                  </button>
                                 </div>
                               </div>
                               {/* WhatsApp/Telegram links */}

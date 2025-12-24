@@ -37,7 +37,12 @@ const FormPage: React.FC = () => {
   useEffect(() => {
     const fetchFormTemplate = async () => {
       try {
-        const response = await fetch(`/api/form/${taskId}`);
+        let response;
+        if (taskId && taskId.endsWith('.json')) {
+          response = await fetch(`/api/form-template/${taskId}`);
+        } else {
+          response = await fetch(`/api/form/${taskId}`);
+        }
         if (!response.ok) throw new Error("Failed to fetch form template");
         const data = await response.json();
         setFormTemplate(extractFormTemplate(data));
@@ -65,7 +70,7 @@ const FormPage: React.FC = () => {
       const response = await fetch("/api/save-form-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, formData, templateName }),
+        body: JSON.stringify({ taskId: templateName, formData }),
       });
       if (!response.ok) throw new Error("Failed to save form");
       alert("Form saved successfully!");
