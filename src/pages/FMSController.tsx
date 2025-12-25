@@ -58,7 +58,7 @@ const FMSController = () => {
 
   // Fetch workers list from backend
   useEffect(() => {
-    fetch("http://localhost:5000/api/workers")
+    fetch("http://192.168.164.30:5003/api/workers")
       .then((res) => res.json())
       .then((data) => {
         setWorkers(data);
@@ -184,9 +184,9 @@ const FMSController = () => {
         ) : (
           <>
             {/* Cards for NEW, Pending, In Progress */}
-            <div className="flex flex-row gap-8 mt-12 w-full justify-center overflow-x-auto">
+            <div className="flex flex-col md:flex-row gap-8 mt-12 w-full justify-center overflow-x-auto">
               {COLUMN_NAMES.map((colName) => (
-                <div key={colName} className="bg-gray-800 rounded-xl shadow-lg p-6 min-w-[320px] max-w-[400px] flex-1">
+                <div key={colName} className="bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-[400px] flex-1">
                   <h3 className="text-2xl font-bold text-white mb-2">{colName}</h3>
                   <div className="text-lg text-blue-300 mb-4">Tasks: {columns[colName]?.length || 0}</div>
                   <div className="space-y-4">
@@ -429,14 +429,14 @@ const FMSController = () => {
                                 <span className="text-xs text-white">مدائن مسائي</span>
                               </a>
                               <a
-                                href="https://t.me/test1998tm_bot"
+                                href={`https://t.me/share/url?url=${encodeURIComponent(`*${task.CaseNumber} - ${task.Title}*\n${task.FBG} CHECK...`)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 px-2 py-1 rounded bg-blue-900 hover:bg-blue-800"
-                                title="Last Mile Telegram"
+                                title="lAST-MILE"
                               >
                                 <FaTelegramPlane className="text-blue-400" size={22} />
-                                <span className="text-xs text-white">Last Mile Telegram</span>
+                                <span className="text-xs text-white">Share to Telegram</span>
                               </a>
                             </div>
                           </div>

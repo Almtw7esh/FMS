@@ -1,0 +1,25 @@
+Column,CaseNumber,Title,FBG,CardText,uuid,messages
+Pending,MS-217743,Case #cc-25122507204677573: FBG2207 FAT42 DOWN,FBG2207,"MS-217743
+00:29
+|
+0 
+|
+0/0
+Case #cc-25122507204677573: FBG2207 FAT42 DOWN
+FBG2207
+Created By: s_creatio msp_fms msp_fms
+Assigned To: Hussein Nizar Hameed Nizar Hameed
+Inspection
+Under Inspection - Halasat",2194ae87-196b-4831-bc95-8a30c45900f9,"[{""sender"": ""s_creatio msp_fms msp_fms"", ""message"": ""Task created by s_creatio msp_fms msp_fms"", ""date"": ""25/12/2025 10:25 AM""}, {""sender"": ""Hussein Nizar Hameed Nizar Hameed "", ""message"": ""Team changed: Added: Hussein Nizar Hameed Nizar Hameed by Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe"", ""date"": ""25/12/2025 10:33 AM""}, {""sender"": ""Hussein Nizar Hameed Nizar Hameed"", ""message"": ""Team leader changed to Hussein Nizar Hameed Nizar Hameed by Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe"", ""date"": ""25/12/2025 10:33 AM""}, {""sender"": ""Hussein Nizar Hameed Nizar Hameed"", ""message"": ""Task status changed to TaskAccepted by Hussein Nizar Hameed Nizar Hameed\nنعم"", ""date"": ""25/12/2025 10:34 AM""}]"
+In Progress,MS-217711,Case #cc-25122506490133774: zone( FBG1257 ) fat(FAT25 ) DOWN,FBG1257,"MS-217711
+01:02
+|
+1 
+|
+0/0
+Case #cc-25122506490133774: zone( FBG1257 ) fat(FAT25 ) DOWN
+FBG1257
+Created By: s_creatio msp_fms msp_fms
+Assigned To: sadiq faaiq Jassim faaiq Jassim
+Inspection
+Under Inspection - Halasat",db156ddb-a23d-4c64-94d6-31f1eb7168cf,"[{""sender"": ""s_creatio msp_fms msp_fms"", ""message"": ""Task created by s_creatio msp_fms msp_fms"", ""date"": ""25/12/2025 09:52 AM""}, {""sender"": ""yousif muyad majeed muyad majeed "", ""message"": ""Team changed: Added: yousif muyad majeed muyad majeed by Ayah Ammar Salim Ammar Salim"", ""date"": ""25/12/2025 09:58 AM""}, {""sender"": ""yousif muyad majeed muyad majeed"", ""message"": ""Team leader changed to yousif muyad majeed muyad majeed by Ayah Ammar Salim Ammar Salim"", ""date"": ""25/12/2025 09:58 AM""}, {""sender"": ""yousif muyad majeed muyad majeed"", ""message"": ""Task status changed to TaskAccepted by yousif muyad majeed muyad majeed\nتم توجيه فريق"", ""date"": ""25/12/2025 09:59 AM""}, {""sender"": ""sadiq faaiq Jassim faaiq Jassim "", ""message"": ""Team changed: Added: sadiq faaiq Jassim faaiq Jassim | Removed: yousif muyad majeed muyad majeed by Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe"", ""date"": ""25/12/2025 10:04 AM""}, {""sender"": ""sadiq faaiq Jassim faaiq Jassim"", ""message"": ""Team leader changed to sadiq faaiq Jassim faaiq Jassim by Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe"", ""date"": ""25/12/2025 10:04 AM""}, {""sender"": ""sadiq faaiq Jassim faaiq Jassim"", ""message"": ""Task status changed to TaskAccepted by sadiq faaiq Jassim faaiq Jassim\n."", ""date"": ""25/12/2025 10:12 AM""}, {""sender"": ""FBG1257 "", ""message"": ""Checked in at FBG1257 triggered via GeoLock proximity Remark: . by sadiq faaiq Jassim faaiq Jassim"", ""date"": ""25/12/2025 10:12 AM""}, {""sender"": ""Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe"", ""message"": ""Media uploaded by Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe"", ""date"": ""25/12/2025 10:31 AM""}, {""sender"": ""Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe"", ""message"": ""Haithm Mohammed Jassim AL-Mousoe Mohammed Jassim AL-Mousoe\nقوارض قوارض"", ""date"": ""25/12/2025 10:31 AM""}]"
